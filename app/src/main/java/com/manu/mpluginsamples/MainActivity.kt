@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.manu.mpluginsamples.PluginManager.applicationInit
 import com.manu.mpluginsamples.util.ReflectHelper
 import com.manu.plugin_library.IData
 import com.manu.plugin_library.IDataCallback
@@ -22,7 +23,9 @@ class MainActivity : AppCompatActivity() {
                 Log.i(TAG, "downLoadSuccess")
                 val file = getFileStreamPath("plugin-debug.apk")
                 PluginManager.initDexClassLoader(file.absolutePath)
-                PluginManager.applicationInit()
+                runOnUiThread {
+                    applicationInit()
+                }
             }
 
             override fun downLoadFail(error: String) {
@@ -67,8 +70,7 @@ class MainActivity : AppCompatActivity() {
             File::class.java,
             Int::class.javaPrimitiveType
         )
-        val paramValues =
-            arrayOf(apkFile, PackageManager.GET_RECEIVERS)
+        val paramValues = arrayOf(apkFile, PackageManager.GET_RECEIVERS)
         val method = ReflectHelper.invokeInstanceMethod(packageParse, "parsePackage", paramTypes, paramValues)
         val obj = ReflectHelper.getFieldObject("applicationInfo", method)
         val applicationInfo = (obj as ApplicationInfo)

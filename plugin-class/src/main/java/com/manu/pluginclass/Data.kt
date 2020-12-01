@@ -1,4 +1,4 @@
-package com.manu.plugin
+package com.manu.pluginclass
 
 import com.manu.plugin_library.IData
 import com.manu.plugin_library.IDataCallback

@@ -18,10 +18,10 @@ class MainActivity : AppCompatActivity() {
     override fun attachBaseContext(newBase: Context?) {
         super.attachBaseContext(newBase)
         PluginManager.init(this)
-        PluginManager.downLoadPlugin("plugin-debug.apk", object : PluginManager.DownLoadCallback {
+        PluginManager.downLoadPlugin("plugin-class-debug.apk", object : PluginManager.DownLoadCallback {
             override fun downLoadSuccess() {
                 Log.i(TAG, "downLoadSuccess")
-                val file = getFileStreamPath("plugin-debug.apk")
+                val file = getFileStreamPath("plugin-class-debug.apk")
                 PluginManager.initDexClassLoader(file.absolutePath)
                 runOnUiThread {
                     applicationInit()
@@ -37,15 +37,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        println("getCodeCacheDir:$codeCacheDir")
-        println("getCacheDir:$cacheDir")
-        println("externalCacheDir:$externalCacheDir")
-
     }
 
     fun loadPlugin(view: View) {
         Log.i(TAG, "test")
-        val className = "com.manu.plugin.Data"
+        val className = "com.manu.pluginclass.Data"
         val pluginClass = PluginManager.mDexClassLoader.loadClass(className)
         val obj = ReflectHelper.createObject(pluginClass)
         val data: IData = obj as IData
@@ -57,7 +53,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         data.registerCallback(callBack)
-        getPluginName(getFileStreamPath("plugin-debug.apk"))
+        getPluginName(getFileStreamPath("plugin-class-debug"))
     }
 
     companion object {

@@ -51,7 +51,7 @@ object PluginManager{
      */
     fun applicationInit(){
         Log.i(TAG, "applicationInit")
-        val className = "com.manu.plugin.PluginApplication"
+        val className = "com.manu.pluginclass.PluginClassApplication"
         val pluginClass = mDexClassLoader.loadClass(className)
 //        val obj = ReflectHelper.createObject(pluginClass)
         val obj = pluginClass.newInstance()

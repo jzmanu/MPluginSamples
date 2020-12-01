@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.2"
 
     defaultConfig {
-        applicationId "com.manu.plugin"
+        applicationId "com.manu.pluginclass"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
@@ -41,10 +41,10 @@ def rootPath = rootDir.path
 
 task pluginApkToAppAssets(){
     delete{
-        delete("$rootPath/app/src/main/assets/plugin-debug.apk")
+        delete("$rootPath/app/src/main/assets/plugin-class-debug.apk")
     }
     copy {
-        from('build/outputs/apk/debug/plugin-debug.apk')
+        from('build/outputs/apk/debug/plugin-class-debug.apk')
         into("$rootPath/app/src/main/assets/")
     }
 }

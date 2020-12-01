@@ -1,4 +1,4 @@
-package com.manu.plugin
+package com.manu.pluginclass
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

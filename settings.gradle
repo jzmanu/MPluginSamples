@@ -1,0 +1,4 @@
+include ':plugin-library'
+include ':plugin'
+include ':app'
+rootProject.name = "MPluginSamples"

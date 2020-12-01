@@ -1,0 +1,109 @@
+package com.amt.net;
+
+import android.content.Context;
+import android.os.SystemProperties;
+
+import com.amt.app.IptvApp;
+import com.amt.auth.AuthManager;
+import com.amt.dialog.AmtDialogManager;
+import com.amt.player.iptvplayer.IPTVPlayer;
+import com.amt.utils.ALOG;
+import com.amt.utils.APKHelper;
+import com.amt.app.IPTVActivity;
+import com.amt.utils.SystemPropHelper;
+import com.android.smart.terminal.iptvNew.R;
+
+
+/**
+ * Created by lyn on 2017/4/11.
+ */
+
+
+
+public class NetWorkProxy implements NetWorkListener {
+    private Context mcontext;
+
+    public NetWorkProxy(Context context){
+
+        if(context!=null){
+            mcontext=context;
+        }
+
+    }
+
+    /***
+     *
+     * @param netType 网络连接类型。
+     * NetConnectManager#NETTYPE_LINK: 有线网络
+     *  NetConnectManager#NETTYPE_WIFI: 无线网络
+     * @param networkExtra 网络信息。如pppoe拨号状态等。扩展用
+     */
+    @Override
+    public void onNetConnected(int netType, NetWorkExtra networkExtra) {
+        ALOG.debug("NetWorkProxy > onNetConnected > netType:"+netType+",auth:"+AuthManager.isAuth);
+        ALOG.debug("NetWorkProxy > onNetConnected > APKHelper.isIptvTop(IptvApp.app):"+APKHelper.isIptvTop(IptvApp.app)+",com.ysten.laucher"+APKHelper.isTop(IptvApp.app,",com.ysten.laucher")+",com.example.jumptolaucher"+APKHelper.isTop(IptvApp.app,"com.example.jumptolaucher")+",setting:"+APKHelper.isTop(IptvApp.app,"com.ysten.setting"));
+//        if(!IptvApp.authManager.isAuth&& (APKHelper.isIptvTop(IptvApp.app)||APKHelper.isTop(IptvApp.app,"com.ysten.laucher")||APKHelper.isTop(IptvApp.app,"com.example.jumptolaucher")||APKHelper.isTop(IptvApp.app,"com.ysten.setting"))) {
+        if(!IptvApp.authManager.isAuth) {
+            //更新进度条，50%
+            IptvApp.authManager.onNetChanged(AuthManager.NETEVENT_TYPE_CONNECTIVITY, true);
+        }
+        IPTVPlayer.setValue("setEthUpDown","1");
+        //插上网线取消Dialog
+        if (IPTVActivity.mDialogManager.currentDialogIsShow()){
+            IPTVActivity.mDialogManager.dismissAMTDialog();
+        }
+       // IPTVActivity.mDialogManager.disAmtPopupWindow();
+
+    }
+
+    /***
+     *
+     * @param netType 网络连接类型。
+     *  NetConnectManager#NETTYPE_LINK 有线网络
+     * NetConnectManager#NETTYPE_WIFI 无线网络
+     * @param networkExtra 网络信息。如pppoe拨号状态等。扩展用
+     */
+    @Override
+    public void onNetDisConnect(int netType, NetWorkExtra networkExtra) {
+        ALOG.debug("NetWorkProxy > onNetDisConnect > netType:"+netType);
+//        if(!IptvApp.authManager.isAuth&& (APKHelper.isIptvTop(IptvApp.app)||APKHelper.isTop(IptvApp.app,"com.ysten.laucher")||APKHelper.isTop(IptvApp.app,"com.example.jumptolaucher")||APKHelper.isTop(IptvApp.app,"com.ysten.setting"))) {
+        if(!IptvApp.authManager.isAuth) {
+            //进度条50%错误
+            IptvApp.authManager.onNetChanged(AuthManager.NETEVENT_TYPE_CONNECTIVITY, false);
+        }else if(IptvApp.authManager.isAuth){
+            SystemProperties.set(SystemPropHelper.AUTH_STATUS,"3");
+            IPTVActivity.mDialogManager.showIPTVErrorDialog(AmtDialogManager.ERROR_CODE_0071,
+                    R.string.error_title_0010,R.string.error_suggest_0010);
+            //弹在右下角的小弹窗 djf
+         //   IPTVActivity.mDialogManager.showAmtPopupWindow();
+        }
+        IPTVPlayer.setValue("setEthUpDown","0");
+    }
+
+    @Override
+    public void onPhyLinkUp() {
+        ALOG.debug("NetWorkProxy > onPhyLinkUp ");
+        if(!IptvApp.authManager.isAuth&&(APKHelper.isIptvTop(IptvApp.app)||APKHelper.isTop(IptvApp.app,"com.ysten.laucher")||APKHelper.isTop(IptvApp.app,"com.example.jumptolaucher"))) {
+            //更新进度条10%
+            IptvApp.authManager.onNetChanged(AuthManager.NETEVENT_TYPE_TRAFFIC, true);
+        }
+        //插上网线取消Dialog
+        if (IPTVActivity.mDialogManager.currentDialogIsShow()){
+            IPTVActivity.mDialogManager.dismissAMTDialog();
+            IPTVActivity.DissMissDialog=true;
+        }
+       // IPTVActivity.mDialogManager.disAmtPopupWindow();
+
+
+    }
+
+    @Override
+    public void onPhyLinkDown() {
+        ALOG.debug("NetWorkProxy > onPhyLinkDown ");
+        if(!IptvApp.authManager.isAuth&& (APKHelper.isIptvTop(IptvApp.app)||APKHelper.isTop(IptvApp.app,"com.ysten.laucher")||APKHelper.isTop(IptvApp.app,"com.example.jumptolaucher"))) {
+            ////更新进度条10%错误
+            IptvApp.authManager.onNetChanged(AuthManager.NETEVENT_TYPE_TRAFFIC, false);
+        }else if(IptvApp.authManager.isAuth) {
+            SystemProperties.set(SystemPropHelper.AUTH_STATUS,"3");
+            IPTVActivity.mDialogManager.showIPTVErrorDialog(AmtDialogManager.ERROR_CODE_0071,
+                    R.string.error_title_0010,R.string.error_suggest_0010);

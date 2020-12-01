@@ -1,0 +1,122 @@
+package com.amt.net;
+
+import android.text.TextUtils;
+
+import com.amt.utils.ALOG;
+
+import java.io.FileInputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Created by DonWZ on 2017/1/12.
+ * <p>
+ * 网络模块本地JNI交互类。
+ */
+
+public class NetNative {
+    /**
+     * 网口名称：eth0(走DHCP、DHCP+/IPOE、STATIC网络方式。有线)
+     */
+    public static final String IFNAME_ETH0 = "eth0";
+    /**
+     * 网口名称：ppp0(走PPPOE拨号上网方式。有线)
+     */
+    public static final String IFNAME_PPP0 = "ppp0";
+    /**
+     * 网口名称：wlan0（wifi）
+     */
+    public static final String IFNAME_WLAN0 = "wlan0";
+    /**默认有效端口，获取IP、MAC等将从默认端口里获取*/
+    private String DefaultIFName = IFNAME_ETH0;
+
+    /**
+     * 标识当前网线是否插上。实际使用过程中，难免会多次获取网线状态，
+     * 所以将状态放在内存里，避免每次都从so或者文件获取状态，以减小性能消耗
+     */
+//    private String ethLinkStatus = "";
+    private static final String TAG="NetNative";
+    private static final String STATUS_UP = "up";
+    private static final String STATUS_DOWN = "down";
+
+    private NetNative() {
+        try {
+            new Thread() {
+                @Override
+                public void run() {
+                    nvInitAmtUtils();
+                }
+            }.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static NetNative instance = new NetNative();
+
+    public static NetNative init() {
+        return instance;
+    }
+
+    private NetWorkListener mNetWorkListener;
+
+    protected void setNetListener(NetWorkListener netWorkListener) {
+        mNetWorkListener = netWorkListener;
+    }
+
+    /**
+     * 获取IP。（默认获取eth0端口的IP）
+     *
+     * @return
+     */
+    protected String getIpAddress() {
+       return getIpAddress(DefaultIFName);
+    }
+
+    /**
+     * 根据网络端口名获取IP
+     *
+     * @param netName
+     * @return
+     */
+    protected String getIpAddress(String netName) {
+        return nvGetIP(netName);
+
+    }
+
+    /**
+     * 获取mac。默认获取eth0的mac地址
+     *
+     * @return
+     */
+    protected String getMac() {
+        return getMac(DefaultIFName);
+    }
+
+    /**
+     * 获取mac。(不推荐使用。MAC与业务绑定关系强，一般都获取eht0的MAC，推荐使用{@link #getMac()}接口。
+     * 此接口仅在非常特殊的需求下需要获取其他网口MAC时才使用)
+     *
+     * @param netName 网口名称。因为业务上会以mac作为机顶盒的唯一标识，是固定不变的，所以一般获取eth0网口。
+     * @return
+     */
+    protected String getMac(String netName) {
+        String mac=nvGetMac(netName);
+        ALOG.info(TAG,"mac-->"+mac+"   && netName-->"+netName);
+        return mac;
+    }
+
+    protected String getMask() {
+        return getMask(DefaultIFName);
+    }
+
+    protected String getMask(String netName) {
+        return nvGetMask(netName);
+    }
+
+    protected String getGateWay() {
+        return getGateWay(DefaultIFName);
+    }
+
+    protected String getGateWay(String netName) {
+        String gateWay = nvGetGateWay(net

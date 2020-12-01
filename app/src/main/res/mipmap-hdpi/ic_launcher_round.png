@@ -1,0 +1,125 @@
+package com.amt.app;
+
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.webkit.URLUtil;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
+
+import com.SyMedia.SyDebug.RemoteBroadCastReceiver;
+import com.amt.amtdata.AmtDataManager;
+import com.amt.amtdata.IPTVData;
+import com.amt.amtdata.ServiceCfg;
+import com.amt.app.view.AudioTrackView;
+import com.amt.app.view.ChannelNoView;
+import com.amt.app.view.LoadingView;
+import com.amt.app.view.ShiftView;
+import com.amt.app.view.VolumeView;
+import com.amt.auth.AuthManager;
+import com.amt.config.Config;
+import com.amt.dialog.AmtDialogManager;
+import com.amt.jsinterface.Iptv2EPG;
+import com.amt.player.AmtMediaPlayer;
+import com.amt.player.MediaEventInfo;
+import com.amt.player.MediaEventInfoListener;
+import com.amt.player.PlayerJSInterface;
+import com.amt.player.iptvplayer.IPTVPlayer;
+import com.amt.utils.ALOG;
+import com.amt.utils.APKHelper;
+import com.amt.utils.ResolutionHelper;
+import com.amt.utils.SystemPropHelper;
+import com.amt.utils.Utils;
+import com.amt.utils.YDSqmManager;
+import com.amt.utils.keymap.EPGKey;
+import com.amt.utils.keymap.GlobalKeyHelper;
+import com.amt.utils.keymap.KeyHelper;
+import com.amt.utils.powermanager.StandbyBroadcastReceived;
+import com.amt.webview.IPTVWebChromeClient;
+import com.amt.webview.IPTVWebCustomClient;
+import com.amt.webview.IPTVWebView;
+import com.amt.webview.IPTVWebViewClient;
+import com.amt.webview.IPTVWebviewListener;
+import com.amt.webview.WebViewManager;
+import com.android.smart.terminal.iptvNew.R;
+
+import java.util.Arrays;
+
+public class IPTVActivity extends Activity implements IPTVAvtivityView {
+
+    public static Context context;
+    public static final String TAG = "IPTVActivity";
+    private Handler mHandler = null;
+    private LoadingView mLoadingView = null;
+    public ShiftView mShiftView = null;
+    private AudioTrackView mAudioTrackView = null;
+    private ChannelNoView mChannelNoView = null;
+    private VolumeView mVolumeView = null;
+    /**
+     * video视图容器，用于存放surfaceView的容器
+     */
+    private RelativeLayout layoutVideo;
+    /**
+     * Webview容器，用于存放Webview的容器。
+     */
+    private RelativeLayout layoutWebview;
+    /**
+     * 永远在最顶层的layout容器，用于存放本地音量条、时移图标、加载圈、本地播控UI、本地频道图标等
+     */
+    private RelativeLayout layoutTopUI = null;
+    private IPTVWebView iptvWebView = null;
+    public static final String WEBTAG_IPTV = "web_iptv";
+    private View rootView;
+    private WebViewManager webManager;
+    private String backStorePlayUrl;
+    private boolean needRestorePlay = false;
+    private boolean isLivePlay = false;
+    private SoftInptHelper mInputHelper;
+    /**
+     * Dialog模块管理器对象  所有的Dialog创建都将通过这个来进行
+     **/
+    public static AmtDialogManager mDialogManager;
+    /**
+     * 标识是否是首次启动Activity,用于在onResume生命周期内判断是否需要创建播放器
+     */
+    private boolean isFirstEnter = true;
+    public static IPTVActivity iptvActivity;
+    public static boolean DissMissDialog = false;
+    /**标识是否向EPG页面发送按键事件*/
+    public static boolean isSendKeyToWeb = false;
+    /**标识IPTV是否处于pause状态，避免从设置返回出现黑屏问题*/
+    public static boolean isOnPause = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        this.setTheme(android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        super.onCreate(savedInstanceState);
+        getWindow().setFlags(0x1000000, 0x1000000);
+        getWindow().setFlags(0x1000000, 0x1000000);
+        context = this;
+        iptvActivity = this;
+        ALOG.debug(TAG, "onCreate >>>");
+        rootView = LayoutInflater.from(this).inflate(R.layout.activity_iptv_main, null);
+        setContentView(rootView);
+        mDialogManager = AmtDialogManager.getManager(this);
+        webManager = WebViewManager.getManager();
+
+        boolean first = AmtDataManager.getBoolean("first",true);
+        if (first){
+            try {//长虹通过属性判断平台
+                String typeinfo = SystemPropHelper.getProp("persist.sys.ch.stbplatform", "");
+                ALOG.info("typeinfo > " + typeinfo);
+                if (typeinfo.equals("zte")) {
+                    AmtDataManager.putString(IPTVData.Config_PlatForm, "1", getPackageName());
+                    AmtDataManager.putString(ServiceCfg.IPTV_AuthURL, "http://10.206.253.16:8080/iptvepg/platform/index.jsp", "");
+                    AmtDataManager.putString(ServiceCfg.IPTV_AuthURLBackup, "http://10.206.250.69:8080/iptvepg/platform/index.jsp", "");
+                } else if (typeinfo.equals("huawei")) {
+                    AmtDataManager.putString(IPTVData.Config_PlatForm, "0", getPackageName());
+                    AmtDataManager.putString(ServiceCfg.IPTV_AuthURL, "http://10.206.255.102:80

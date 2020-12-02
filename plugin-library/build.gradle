@@ -40,7 +40,7 @@ task makeJar(){
         delete('build/outputs/pluginlibrary.jar')
     }
     copy {
-        from('build/intermediates/aar_main_jar//debug/classes.jar')
+        from('build/intermediates/aar_main_jar/debug/classes.jar')
         into('build/outputs/')
         rename('classes.jar','pluginlibrary.jar')
     }
@@ -54,7 +54,9 @@ def rootPath = getRootDir().getPath()
 task jarToPlugin(){
     copy {
         from('build/outputs/pluginlibrary.jar')
-        into("$rootPath/plugin/lib")
+        into("$rootPath/plugin-class/lib")
+        from('build/outputs/pluginlibrary.jar')
+        into("$rootPath/plugin-res/lib")
     }
 }
 // 生成jar之后将其copy到plugin中的lib下面
